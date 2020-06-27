@@ -21,7 +21,6 @@
 %%
 %% Description: a gen_server implementing a simple
 %% terminal (using the group module) for a CLI
-%% over SSH
 
 -module(tty_cli).
 
