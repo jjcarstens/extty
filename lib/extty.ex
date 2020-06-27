@@ -1,12 +1,13 @@
-defmodule TtyTest do
+defmodule ExTTY do
   use GenServer
   require Record
+  require Logger
 
   Record.defrecord(:tty_pty, Record.extract(:tty_pty, from: "src/tty_pty.hrl"))
 
   @spec start_link(keyword()) :: GenServer.on_start()
-  def start_link(args) do
-    GenServer.start_link(__MODULE__, args, name: __MODULE__)
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @spec send_text(String.t()) :: :ok
@@ -19,13 +20,16 @@ defmodule TtyTest do
   end
 
   @impl true
-  def init(_args) do
+  def init(opts) do
+    handler = Keyword.get(opts, :handler)
+    type = Keyword.get(opts, :type, :elixir)
+    shell_opts = Keyword.get(opts, :shell_opts, [])
     pty = tty_pty(term: "xterm", width: 80, height: 24, modes: [echo: true])
-    {:ok, %{pty: pty, buf: empty_buf(), group: nil}, {:continue, :continue}}
+    {:ok, %{handler: handler, pty: pty, buf: empty_buf(), group: nil, type: type, shell_opts: shell_opts}, {:continue, :start_shell}}
   end
 
   @impl true
-  def handle_continue(:continue, state) do
+  def handle_continue(:start_shell, state) do
     {:noreply, start_shell(state)}
   end
 
@@ -43,7 +47,7 @@ defmodule TtyTest do
     {chars, new_buf} =
       :tty_cli.io_request({:window_change, old_pty}, state.buf, new_pty, :undefined)
 
-    IO.puts("Got: #{inspect(IO.iodata_to_binary(chars))}")
+    send_data(chars, state)
 
     {:reply, :ok, %{state | pty: new_pty, buf: new_buf}}
   end
@@ -67,16 +71,36 @@ defmodule TtyTest do
 
   def handle_info({group, request}, %{group: group} = state) do
     {chars, new_buf} = :tty_cli.io_request(request, state.buf, state.pty, group)
-    IO.puts("Got: #{inspect(IO.chardata_to_string(chars))}")
+    send_data(chars, state)
     {:noreply, %{state | buf: new_buf}}
   end
 
   defp start_shell(state) do
-    # shell_spawner = {:shell, :start, []}
-    shell_spawner = {Elixir.IEx, :start, []}
-
-    %{state | group: :group.start(self(), shell_spawner, [{:echo, true}]), buf: empty_buf()}
+    %{state | group: :group.start(self(), shell_spawner(state), [{:echo, true}]), buf: empty_buf()}
   end
 
   defp empty_buf(), do: {[], [], 0}
+
+  defp send_data(chars, %{handler: handler}) do
+    str = IO.chardata_to_string(chars)
+
+    if handler do
+      send handler, {:tty_data, str}
+    else
+      Logger.debug("[#{inspect(__MODULE__)}] tty_data - #{inspect(str)}")
+    end
+  end
+
+  defp shell_spawner(%{type: :erlang, shell_opts: opts}) do
+    {:shell, :start, opts}
+  end
+
+  defp shell_spawner(%{type: :elixir, shell_opts: opts}) do
+    {Elixir.IEx, :start, opts}
+  end
+
+  defp shell_spawner(state) do
+    Logger.warn("[#{inspect(__MODULE__)}] unknown shell type #{inspect(state.type)} - defaulting to :elixir")
+    shell_spawner(%{state | type: :elixir})
+  end
 end
