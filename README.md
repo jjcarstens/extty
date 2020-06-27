@@ -1,18 +1,39 @@
-# TtyTest
+# ExTTY
+
+Run an Elixir or Erlang shell as a GenServer process
+
+# Installation
+
+For whatever reason, the package name is the ⌨️ emoji. Go with it :wink:
 
 ```elixir
-$ iex -S mix                                                        master*
-Erlang/OTP 23 [erts-11.0.2] [source] [64-bit] [smp:4:4] [ds:4:4:10] [async-threads:1] [hipe]
+def deps() do
+  [
+    {:extty, "~> 0.1"}
+  ]
+end
+```
 
-Interactive Elixir (1.10.3) - press Ctrl+C to exit (type h() ENTER for help)
-iex(1)> TtyTest.start_link([])
+# Usage
+
+This is heavily adapted from [`ssh_cli.erl`](https://github.com/erlang/otp/blob/master/lib/ssh/src/ssh_cli.erl)
+and functions much like the SSH console implementation.
+
+This will start a terminal shell process in a GenServer. You can then send ANSI text
+to it to behave like a normal TTY. When starting the shell, you must specify a handler
+pid to receive the returned text data. The incoming message will be formatted as
+`{:tty_data, String.t()}`
+
+```elixir
+iex()> ExTTY.start_link(handler: self())
 {:ok, #PID<0.149.0>}
-Got: "Interactive Elixir (1.10.3) - press Ctrl+C to exit (type h() ENTER for help)\r\n"
-Got: "iex(1)> "
-iex(2)> TtyTest.send_text("1+1\n")
-Got: "1+1\r\n"
+iex()> flush()
+{:tty_data, "Interactive Elixir (1.10.3) - press Ctrl+C to exit (type h() ENTER for help)\r\n"}
+{:tty_data, "iex(1)> "}
+iex()> ExTTY.send_text("1+1\n")
 :ok
-Got: "\e[33m2\e[0m\r\n"
-Got: "iex(2)> "
-iex(3)>
+iex()> flush()
+{:tty_data, "1+1\r\n"}
+{:tty_data, "\e[33m2\e[0m\r\n"}
+{:tty_data, "iex(2)> "}
 ```
