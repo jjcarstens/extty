@@ -7,7 +7,7 @@ defmodule ExTTY do
 
   @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(opts) do
-    name = Keyword.pop(opts, :name, __MODULE__)
+    {name, opts} = Keyword.pop(opts, :name, __MODULE__)
     GenServer.start_link(__MODULE__, opts, name: name)
   end
 
