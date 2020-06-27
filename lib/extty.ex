@@ -7,16 +7,18 @@ defmodule ExTTY do
 
   @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+    name = Keyword.pop(opts, :name, __MODULE__)
+    GenServer.start_link(__MODULE__, opts, name: name)
   end
 
-  @spec send_text(String.t()) :: :ok
-  def send_text(text) do
-    GenServer.call(__MODULE__, {:send, text})
+  @spec send_text(GenServer.name(), String.t()) :: :ok
+  def send_text(tty \\ __MODULE__, text) do
+    GenServer.call(tty, {:send, text})
   end
 
-  def window_change(width, height) do
-    GenServer.call(__MODULE__, {:window_change, width, height})
+  @spec window_change(GenServer.name(), non_neg_integer(), non_neg_integer()) :: :ok
+  def window_change(tty \\ __MODULE__, width, height) do
+    GenServer.call(tty, {:window_change, width, height})
   end
 
   @impl true
