@@ -4,7 +4,7 @@ Run an Elixir or Erlang shell as a GenServer process
 
 # Installation
 
-For whatever reason, the package name is the ⌨️ emoji. Go with it :wink:
+Install `extty` by adding it to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps() do
