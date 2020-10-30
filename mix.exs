@@ -1,13 +1,13 @@
 defmodule ExTTY.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.2.0"
   @source_url "https://github.com/jjcarstens/extty"
 
   def project do
     [
       app: :extty,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       build_embedded: Mix.env() == :prod,

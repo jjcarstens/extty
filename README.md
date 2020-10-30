@@ -9,7 +9,7 @@ Install `extty` by adding it to your list of dependencies in `mix.exs`:
 ```elixir
 def deps() do
   [
-    {:extty, "~> 0.1"}
+    {:extty, "~> 0.2"}
   ]
 end
 ```
@@ -25,12 +25,12 @@ pid to receive the returned text data. The incoming message will be formatted as
 `{:tty_data, String.t()}`
 
 ```elixir
-iex()> ExTTY.start_link(handler: self())
-{:ok, #PID<0.149.0>}
+
+iex()> {:ok, tty} = ExTTY.start_link(handler: self())
 iex()> flush()
 {:tty_data, "Interactive Elixir (1.10.3) - press Ctrl+C to exit (type h() ENTER for help)\r\n"}
 {:tty_data, "iex(1)> "}
-iex()> ExTTY.send_text("1+1\n")
+iex()> ExTTY.send_text(tty, "1+1\n")
 :ok
 iex()> flush()
 {:tty_data, "1+1\r\n"}
