@@ -27,7 +27,16 @@ defmodule ExTTY do
     type = Keyword.get(opts, :type, :elixir)
     shell_opts = Keyword.get(opts, :shell_opts, [])
     pty = tty_pty(term: "xterm", width: 80, height: 24, modes: [echo: true])
-    {:ok, %{handler: handler, pty: pty, buf: empty_buf(), group: nil, type: type, shell_opts: shell_opts}, {:continue, :start_shell}}
+
+    {:ok,
+     %{
+       handler: handler,
+       pty: pty,
+       buf: empty_buf(),
+       group: nil,
+       type: type,
+       shell_opts: shell_opts
+     }, {:continue, :start_shell}}
   end
 
   @impl GenServer
@@ -78,7 +87,11 @@ defmodule ExTTY do
   end
 
   defp start_shell(state) do
-    %{state | group: :group.start(self(), shell_spawner(state), [{:echo, true}]), buf: empty_buf()}
+    %{
+      state
+      | group: :group.start(self(), shell_spawner(state), [{:echo, true}]),
+        buf: empty_buf()
+    }
   end
 
   defp empty_buf(), do: {[], [], 0}
@@ -87,7 +100,7 @@ defmodule ExTTY do
     str = IO.chardata_to_string(chars)
 
     if handler do
-      send handler, {:tty_data, str}
+      send(handler, {:tty_data, str})
     else
       Logger.debug("[#{inspect(__MODULE__)}] tty_data - #{inspect(str)}")
     end
@@ -102,7 +115,10 @@ defmodule ExTTY do
   end
 
   defp shell_spawner(state) do
-    Logger.warn("[#{inspect(__MODULE__)}] unknown shell type #{inspect(state.type)} - defaulting to :elixir")
+    Logger.warn(
+      "[#{inspect(__MODULE__)}] unknown shell type #{inspect(state.type)} - defaulting to :elixir"
+    )
+
     shell_spawner(%{state | type: :elixir})
   end
 end
