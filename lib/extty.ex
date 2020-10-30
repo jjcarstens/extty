@@ -6,18 +6,18 @@ defmodule ExTTY do
   Record.defrecord(:tty_pty, Record.extract(:tty_pty, from: "src/tty_pty.hrl"))
 
   @spec start_link(keyword()) :: GenServer.on_start()
-  def start_link(opts) do
-    {name, opts} = Keyword.pop(opts, :name, __MODULE__)
+  def start_link(opts \\ []) do
+    {name, opts} = Keyword.pop(opts, :name)
     GenServer.start_link(__MODULE__, opts, name: name)
   end
 
-  @spec send_text(GenServer.name(), String.t()) :: :ok
-  def send_text(tty \\ __MODULE__, text) do
+  @spec send_text(GenServer.server(), String.t()) :: :ok
+  def send_text(tty, text) do
     GenServer.call(tty, {:send, text})
   end
 
-  @spec window_change(GenServer.name(), non_neg_integer(), non_neg_integer()) :: :ok
-  def window_change(tty \\ __MODULE__, width, height) do
+  @spec window_change(GenServer.server(), non_neg_integer(), non_neg_integer()) :: :ok
+  def window_change(tty, width, height) do
     GenServer.call(tty, {:window_change, width, height})
   end
 
