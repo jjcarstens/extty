@@ -21,7 +21,7 @@ defmodule ExTTY do
     GenServer.call(tty, {:window_change, width, height})
   end
 
-  @impl true
+  @impl GenServer
   def init(opts) do
     handler = Keyword.get(opts, :handler)
     type = Keyword.get(opts, :type, :elixir)
@@ -30,12 +30,12 @@ defmodule ExTTY do
     {:ok, %{handler: handler, pty: pty, buf: empty_buf(), group: nil, type: type, shell_opts: shell_opts}, {:continue, :start_shell}}
   end
 
-  @impl true
+  @impl GenServer
   def handle_continue(:start_shell, state) do
     {:noreply, start_shell(state)}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:send, text}, _from, state) do
     text |> to_charlist() |> :tty_cli.to_group(state.group)
 
@@ -54,7 +54,7 @@ defmodule ExTTY do
     {:reply, :ok, %{state | pty: new_pty, buf: new_buf}}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info({group, :set_unicode_state, _arg}, %{group: group} = state) do
     send(group, {self(), :set_unicode_state, true})
     {:noreply, state}
