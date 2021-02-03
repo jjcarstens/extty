@@ -26,7 +26,7 @@ defmodule ExTTY do
     handler = Keyword.get(opts, :handler)
     type = Keyword.get(opts, :type, :elixir)
     shell_opts = Keyword.get(opts, :shell_opts, [])
-    pty = tty_pty(term: "xterm", width: 80, height: 24, modes: [echo: true])
+    pty = tty_pty(term: "xterm", width: 80, height: 24, modes: [echo: true, onlcr: 1])
 
     {:ok,
      %{

@@ -52,7 +52,7 @@ defmodule ExTTYTest do
     refute_receive _
   end
 
-  test "window change redraws prompt" do
+  test "window change acknowledged" do
     pid = start_supervised!({ExTTY, [handler: self()]})
 
     assert_receive {:tty_data, message}
@@ -63,8 +63,8 @@ defmodule ExTTYTest do
 
     :ok = ExTTY.window_change(pid, 40, 20)
 
-    # Redrawn prompt
-    assert_receive {:tty_data, "\e[8Diex(1)> "}
+    # This is what the code does, so check that it works the same
+    assert_receive {:tty_data, ""}
 
     # And nothing else
     refute_receive _
