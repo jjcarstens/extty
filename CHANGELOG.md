@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.1
+
+* Sync tty_cli.erl with ssh_cli.erl in Erlang
+  * `:onlcr` was set so that the CRLF behavior remained the same
+
 ## v0.2.0
 
 * Fixes
