@@ -15,7 +15,7 @@ install_hex_rebar: &install_hex_rebar
 jobs:
   build_elixir_1_11_otp_23:
     docker:
-      - image: hexpm/elixir:1.11.3-erlang-23.2.2-alpine-3.12.1
+      - image: hexpm/elixir:1.11.3-erlang-23.2.3-alpine-3.12.1
     <<: *defaults
     steps:
       - checkout
@@ -39,18 +39,7 @@ jobs:
 
   build_elixir_1_10_otp_23:
     docker:
-      - image: hexpm/elixir:1.10.4-erlang-23.1.2-alpine-3.12.1
-    <<: *defaults
-    steps:
-      - checkout
-      - <<: *install_hex_rebar
-      - run: mix deps.get
-      - run: mix compile
-      - run: mix test
-
-  build_elixir_1_9_otp_22:
-    docker:
-      - image: hexpm/elixir:1.9.4-erlang-22.3.4.9-alpine-3.12.0
+      - image: hexpm/elixir:1.10.4-erlang-23.1.5-alpine-3.12.1
     <<: *defaults
     steps:
       - checkout
@@ -65,4 +54,3 @@ workflows:
     jobs:
       - build_elixir_1_11_otp_23
       - build_elixir_1_10_otp_23
-      - build_elixir_1_9_otp_22
