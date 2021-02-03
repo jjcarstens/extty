@@ -1,7 +1,7 @@
 %%
 %% %CopyrightBegin%
 %%
-%% Copyright Ericsson AB 2005-2018. All Rights Reserved.
+%% Copyright Ericsson AB 2005-2020. All Rights Reserved.
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 %% limitations under the License.
 %%
 %% %CopyrightEnd%
+%%
+
+%%
+%% This file is almost copied verbatem from Erlang's lib/ssh/src/ssh_cli.erl.
 %%
 
 %%
@@ -120,23 +124,29 @@ get_tty_command(left, N, _TerminalType) ->
 %% convert input characters to buffer and to writeout
 %% Note that the buf is reversed but the buftail is not
 %% (this is handy; the head is always next to the cursor)
-conv_buf([], AccBuf, AccBufTail, AccWrite, Col) ->
+conv_buf([], AccBuf, AccBufTail, AccWrite, Col, _Tty) ->
     {AccBuf, AccBufTail, lists:reverse(AccWrite), Col};
-conv_buf([13, 10 | Rest], _AccBuf, AccBufTail, AccWrite, _Col) ->
-    conv_buf(Rest, [], tl2(AccBufTail), [10, 13 | AccWrite], 0);
-conv_buf([13 | Rest], _AccBuf, AccBufTail, AccWrite, _Col) ->
-    conv_buf(Rest, [], tl1(AccBufTail), [13 | AccWrite], 0);
-conv_buf([10 | Rest], _AccBuf, AccBufTail, AccWrite, _Col) ->
-    conv_buf(Rest, [], tl1(AccBufTail), [10, 13 | AccWrite], 0);
-conv_buf([C | Rest], AccBuf, AccBufTail, AccWrite, Col) ->
-    conv_buf(Rest, [C | AccBuf], tl1(AccBufTail), [C | AccWrite], Col + 1).
+conv_buf([13, 10 | Rest], _AccBuf, AccBufTail, AccWrite, _Col, Tty) ->
+    conv_buf(Rest, [], tl2(AccBufTail), [10, 13 | AccWrite], 0, Tty);
+conv_buf([13 | Rest], _AccBuf, AccBufTail, AccWrite, _Col, Tty) ->
+    conv_buf(Rest, [], tl1(AccBufTail), [13 | AccWrite], 0, Tty);
+conv_buf([10 | Rest], _AccBuf, AccBufTail, AccWrite0, _Col, Tty) ->
+    AccWrite =
+        case pty_opt(onlcr,Tty) of
+            0 -> [10 | AccWrite0];
+            1 -> [10,13 | AccWrite0];
+            undefined -> [10 | AccWrite0]
+        end,
+    conv_buf(Rest, [], tl1(AccBufTail), AccWrite, 0, Tty);
+conv_buf([C | Rest], AccBuf, AccBufTail, AccWrite, Col, Tty) ->
+    conv_buf(Rest, [C | AccBuf], tl1(AccBufTail), [C | AccWrite], Col + 1, Tty).
 
 
 %%% put characters at current position (possibly overwriting
 %%% characters after current position in buffer)
-put_chars(Chars, {Buf, BufTail, Col}, _Tty) ->
+put_chars(Chars, {Buf, BufTail, Col}, Tty) ->
     {NewBuf, NewBufTail, WriteBuf, NewCol} =
-	conv_buf(Chars, Buf, BufTail, [], Col),
+	conv_buf(Chars, Buf, BufTail, [], Col, Tty),
     {WriteBuf, {NewBuf, NewBufTail, NewCol}}.
 
 %%% insert character at current position
@@ -144,7 +154,7 @@ insert_chars([], {Buf, BufTail, Col}, _Tty) ->
     {[], {Buf, BufTail, Col}};
 insert_chars(Chars, {Buf, BufTail, Col}, Tty) ->
     {NewBuf, _NewBufTail, WriteBuf, NewCol} =
-	conv_buf(Chars, Buf, [], [], Col),
+	conv_buf(Chars, Buf, [], [], Col, Tty),
     M = move_cursor(special_at_width(NewCol+length(BufTail), Tty), NewCol, Tty),
     {[WriteBuf, BufTail | M], {NewBuf, BufTail, NewCol}}.
 
@@ -168,13 +178,28 @@ delete_chars(N, {Buf, BufTail, Col}, Tty) -> % N < 0
 %%% if current window is wider than previous)
 window_change(Tty, OldTty, Buf)
   when OldTty#tty_pty.width == Tty#tty_pty.width ->
+     %% No line width change
     {[], Buf};
 window_change(Tty, OldTty, {Buf, BufTail, Col}) ->
-    M1 = move_cursor(Col, 0, OldTty),
-    N = erlang:max(Tty#tty_pty.width - OldTty#tty_pty.width, 0) * 2,
-    S = lists:reverse(Buf, [BufTail | lists:duplicate(N, $ )]),
-    M2 = move_cursor(length(Buf) + length(BufTail) + N, Col, Tty),
-    {[M1, S | M2], {Buf, BufTail, Col}}.
+    case OldTty#tty_pty.width - Tty#tty_pty.width of
+        0 ->
+            %% No line width change
+            {[], {Buf,BufTail,Col}};
+
+        DeltaW0 when DeltaW0 < 0,
+                     BufTail == [] ->
+            % Line width is decreased, cursor is at end of input
+            {[], {Buf,BufTail,Col}};
+
+        DeltaW0 when DeltaW0 < 0,
+                     BufTail =/= [] ->
+            % Line width is decreased, cursor is not at end of input
+            {[], {Buf,BufTail,Col}};
+
+        DeltaW0 when DeltaW0 > 0 ->
+            % Line width is increased
+            {[], {Buf,BufTail,Col}}
+        end.
 
 %% move around in buffer, respecting pad characters
 step_over(0, Buf, [?PAD | BufTail], Col) ->
@@ -244,4 +269,10 @@ bin_to_list(L) when is_list(L) ->
 bin_to_list(I) when is_integer(I) ->
     I.
 
-
+%%%----------------------------------------------------------------
+pty_opt(Name, Tty) ->
+    try
+        proplists:get_value(Name, Tty#tty_pty.modes, undefined)
+    catch
+        _:_ -> undefined
+    end.
