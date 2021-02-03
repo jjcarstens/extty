@@ -1,5 +1,8 @@
 # ExTTY
 
+[![Hex version](https://img.shields.io/hexpm/v/extty.svg "Hex version")](https://hex.pm/packages/extty)
+[![CircleCI](https://circleci.com/gh/jjcarstens/extty.svg?style=svg)](https://circleci.com/gh/jjcarstens/extty)
+
 Run an Elixir or Erlang shell as a GenServer process
 
 # Installation
