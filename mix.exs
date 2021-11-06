@@ -35,7 +35,8 @@ defmodule ExTTY.MixProject do
   defp deps do
     [
       {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
-      {:ex_doc, "~> 0.22", only: :docs}
+      {:ex_doc, "~> 0.22", only: :docs},
+      {:muontrap, "~> 1.0.0"}
     ]
   end
 

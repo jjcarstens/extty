@@ -114,11 +114,28 @@ defmodule ExTTY do
     {Elixir.IEx, :start, opts}
   end
 
+  defp shell_spawner(%{type: :muontrap, shell_opts: opts}) do
+    {__MODULE__, :spawn_muontrap, opts}
+  end
+
   defp shell_spawner(state) do
     Logger.warn(
       "[#{inspect(__MODULE__)}] unknown shell type #{inspect(state.type)} - defaulting to :elixir"
     )
 
     shell_spawner(%{state | type: :elixir})
+  end
+
+  def spawn_muontrap(opts \\ []) do
+    exec = Keyword.fetch!(opts, :exec)
+    args = Keyword.fetch!(opts, :args)
+    gl = Process.group_leader()
+
+    spawn(fn ->
+      MuonTrap.cmd(exec, args,
+        into: IO.stream(gl, :line),
+        stderr_to_stdout: true
+      )
+    end)
   end
 end
