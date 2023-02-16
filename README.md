@@ -40,3 +40,13 @@ iex()> flush()
 {:tty_data, "\e[33m2\e[0m\r\n"}
 {:tty_data, "iex(2)> "}
 ```
+
+## Console
+
+You can use `ExTTY` with `Circuits.UART` as an interactive console on a serial
+port. This is useful in situations where you want multiple consoles accessible
+such as on UART pins and HDMI:
+
+```elixir
+ExTTY.Console.start_link(serial_port: "ttyAMA0")
+```

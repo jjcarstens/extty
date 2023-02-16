@@ -34,6 +34,7 @@ defmodule ExTTY.MixProject do
 
   defp deps do
     [
+      {:circuits_uart, "~> 1.0"},
       {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
       {:ex_doc, "~> 0.22", only: :docs}
     ]
