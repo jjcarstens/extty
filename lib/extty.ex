@@ -115,7 +115,7 @@ defmodule ExTTY do
   end
 
   defp shell_spawner(state) do
-    Logger.warn(
+    Logger.warning(
       "[#{inspect(__MODULE__)}] unknown shell type #{inspect(state.type)} - defaulting to :elixir"
     )
 
