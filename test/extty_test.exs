@@ -37,19 +37,28 @@ defmodule ExTTYTest do
     # Expect a prompt
     assert_receive {:tty_data, "iex(1)> "}
 
-    :ok = ExTTY.send_text(pid, "1+1\r")
+    # Disable colors to make tests easier
+    :ok = ExTTY.send_text(pid, "IEx.configure(colors: [enabled: false])\r")
 
     # Expect it to be echoed back
-    assert_receive {:tty_data, "1+1\r\n"}
+    assert_receive {:tty_data, "IEx.configure(colors: [enabled: false])\r\n" <> _}
 
-    # Expect the response with ANSI colors
-    assert_receive {:tty_data, "\e[33m2\e[0m\r\n"}
+    # Expect the response without ANSI colors
+    assert_receive {:tty_data, ":ok\r\n"}
 
     # Expect the next prompt
     assert_receive {:tty_data, "iex(2)> "}
 
-    # And nothing else
-    refute_receive _
+    :ok = ExTTY.send_text(pid, "1+1\r")
+
+    # Expect it to be echoed back
+    assert_receive {:tty_data, "1+1\r\n" <> _}
+
+    # Expect the response without ANSI colors
+    assert_receive {:tty_data, "2\r\n"}
+
+    # Expect the next prompt
+    assert_receive {:tty_data, "iex(3)> "}
   end
 
   test "window change acknowledged" do

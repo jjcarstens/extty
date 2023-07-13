@@ -3,6 +3,14 @@ defmodule ExTTY do
   require Record
   require Logger
 
+  if String.to_integer(System.otp_release()) < 26 do
+    @empty_buf {[], [], 0}
+    @tty_cli :tty_cli_legacy
+  else
+    @empty_buf {[], {[], []}, [], 0}
+    @tty_cli :tty_cli
+  end
+
   Record.defrecord(:tty_pty, Record.extract(:tty_pty, from: "src/tty_pty.hrl"))
 
   @spec start_link(keyword()) :: GenServer.on_start()
@@ -32,7 +40,7 @@ defmodule ExTTY do
      %{
        handler: handler,
        pty: pty,
-       buf: empty_buf(),
+       buf: @empty_buf,
        group: nil,
        type: type,
        shell_opts: shell_opts
@@ -46,7 +54,7 @@ defmodule ExTTY do
 
   @impl GenServer
   def handle_call({:send, text}, _from, state) do
-    text |> to_charlist() |> :tty_cli.to_group(state.group)
+    text |> to_charlist() |> @tty_cli.to_group(state.group)
 
     {:reply, :ok, state}
   end
@@ -56,7 +64,7 @@ defmodule ExTTY do
     new_pty = tty_pty(old_pty, width: width, height: height)
 
     {chars, new_buf} =
-      :tty_cli.io_request({:window_change, old_pty}, state.buf, new_pty, :undefined)
+      @tty_cli.io_request({:window_change, old_pty}, state.buf, new_pty, :undefined)
 
     send_data(chars, state)
 
@@ -81,7 +89,7 @@ defmodule ExTTY do
   end
 
   def handle_info({group, request}, %{group: group} = state) do
-    {chars, new_buf} = :tty_cli.io_request(request, state.buf, state.pty, group)
+    {chars, new_buf} = @tty_cli.io_request(request, state.buf, state.pty, group)
     send_data(chars, state)
     {:noreply, %{state | buf: new_buf}}
   end
@@ -90,11 +98,9 @@ defmodule ExTTY do
     %{
       state
       | group: :group.start(self(), shell_spawner(state), [{:echo, true}]),
-        buf: empty_buf()
+        buf: @empty_buf
     }
   end
-
-  defp empty_buf(), do: {[], [], 0}
 
   defp send_data(chars, %{handler: handler}) do
     str = IO.chardata_to_string(chars)

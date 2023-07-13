@@ -14,7 +14,7 @@ defmodule ExTTY.MixProject do
       deps: deps(),
       description: description(),
       dialyzer: [
-        flags: [:unmatched_returns, :error_handling, :race_conditions, :underspecs]
+        flags: [:missing_return, :extra_return, :unmatched_returns, :error_handling, :underspecs]
       ],
       docs: docs(),
       package: package(),
