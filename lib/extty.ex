@@ -97,7 +97,7 @@ defmodule ExTTY do
   defp start_shell(state) do
     %{
       state
-      | group: :group.start(self(), shell_spawner(state), [{:echo, true}]),
+      | group: :group.start(self(), shell_spawner(state), echo: true, expand_below: false),
         buf: @empty_buf
     }
   end
