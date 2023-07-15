@@ -20,7 +20,7 @@
 
 %%
 %% This file is almost copied verbatem from Erlang's lib/ssh/src/ssh_cli.erl.
-%% Last compared with OTP-26.0.2
+%% Last compared with OTP-26.0.2 and https://github.com/erlang/otp/pull/7499
 
 %%
 %% Description: a gen_server implementing a simple
@@ -64,6 +64,8 @@ io_request({put_chars, Cs}, Buf, Tty, _Group) ->
     put_chars(bin_to_list(Cs), Buf, Tty);
 io_request({put_chars, unicode, Cs}, Buf, Tty, _Group) ->
     put_chars(unicode:characters_to_list(Cs,unicode), Buf, Tty);
+io_request({put_expand_no_trim, unicode, Expand}, Buf, Tty, _Group) ->
+    insert_chars(unicode:characters_to_list(Expand, unicode), Buf, Tty);
 io_request({insert_chars, Cs}, Buf, Tty, _Group) ->
     insert_chars(bin_to_list(Cs), Buf, Tty);
 io_request({insert_chars, unicode, Cs}, Buf, Tty, _Group) ->
