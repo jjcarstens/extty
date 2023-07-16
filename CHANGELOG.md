@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.0
+
+* Support Elixir 1.15 / OTP 26 with backwards compatibility
+
 ## v0.2.1
 
 * Sync tty_cli.erl with ssh_cli.erl in Erlang
