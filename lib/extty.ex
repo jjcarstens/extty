@@ -34,6 +34,7 @@ defmodule ExTTY do
     handler = Keyword.get(opts, :handler)
     type = Keyword.get(opts, :type, :elixir)
     shell_opts = Keyword.get(opts, :shell_opts, [])
+    remsh = Keyword.get(opts, :remsh)
     pty = tty_pty(term: "xterm", width: 80, height: 24, modes: [echo: true, onlcr: 1])
 
     {:ok,
@@ -43,7 +44,8 @@ defmodule ExTTY do
        buf: @empty_buf,
        group: nil,
        type: type,
-       shell_opts: shell_opts
+       shell_opts: shell_opts,
+       remsh: remsh
      }, {:continue, :start_shell}}
   end
 
@@ -110,6 +112,12 @@ defmodule ExTTY do
     else
       Logger.debug("[#{inspect(__MODULE__)}] tty_data - #{inspect(str)}")
     end
+  end
+
+  defp shell_spawner(%{remsh: node} = state) when not is_nil(node) do
+    {m, f, a} = shell_spawner(%{type: state.type, shell_opts: state.shell_opts})
+
+    {:erpc, :call, [node, m, f, a]}
   end
 
   defp shell_spawner(%{type: :erlang, shell_opts: opts}) do
