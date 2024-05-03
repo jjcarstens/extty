@@ -40,3 +40,18 @@ iex()> flush()
 {:tty_data, "\e[33m2\e[0m\r\n"}
 {:tty_data, "iex(2)> "}
 ```
+
+When running in a cluster, a shell process can also be started on a remote node by
+passing the node name to the `remsh` option:
+
+```elixir
+iex(foo)1> Node.connect(:bar)
+true
+iex(foo)2> Node.list()
+[:bar]
+iex(foo)3> {:ok, tty} = ExTTY.start_link(handler: self(), remsh: :bar)
+iex(foo)4> flush()
+{:tty_data,
+ "Interactive Elixir (1.17.0-dev) - press Ctrl+C to exit (type h() ENTER for help)\r\n"}
+{:tty_data, "iex(bar)1> "}
+```
