@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.4.0
+
+* Adds support for Elixir 1.17
+  * This required using a different entry point into IEx and
+    adjusts the shape of `:shell_opts` to be a flat keyword list
+  * Elixir also renamed `:dot_iex_path` -> `:dot_iex`. The changes
+    here account for that for now, but if you previously included
+    this in options you'll need to change from
+    `shell_opts: [[dot_iex_path: path]]` to `shell_opts: [dot_iex: path]`
+* Minimum supported Elixir version is now 1.13
+
 ## v0.3.0
 
 * Support Elixir 1.15 / OTP 26 with backwards compatibility
