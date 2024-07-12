@@ -116,8 +116,31 @@ defmodule ExTTY do
     {:shell, :start, opts}
   end
 
-  defp shell_spawner(%{type: :elixir, shell_opts: opts}) do
-    {Elixir.IEx, :start, opts}
+  if Version.match?(System.version(), ">= 1.17.0") do
+    defp shell_spawner(%{type: :elixir, shell_opts: opts}) do
+      # :iex.start/0 is now the recommended way to start IEx, but
+      # we want to support the options so we're using the mostly
+      # private API :iex.start/2 which takes the options as a
+      # keyword list and an MFA (which is same one used in :iex.start/0).
+      #
+      # Previously, the shell opts needed to be a double list since it
+      # was passed directly to an MFA, so we need to flatten it here.
+      # Then we also normalize the dot_iex_path arg to match the Elixir 1.17
+      # change to normalize the arg across the code
+      shell_opts =
+        opts
+        |> List.flatten()
+        |> Enum.map(fn
+          {:dot_iex_path, path} -> {:dot_iex, path}
+          kv -> kv
+        end)
+
+      {:iex, :start, [shell_opts, {:elixir_utils, :noop, []}]}
+    end
+  else
+    defp shell_spawner(%{type: :elixir, shell_opts: opts}) do
+      {Elixir.IEx, :start, opts}
+    end
   end
 
   defp shell_spawner(state) do
