@@ -2,7 +2,7 @@ defmodule ExTTYTest do
   use ExUnit.Case
   doctest ExTTY
 
-  test "that Elixir starts" do
+  test "that Elixir starts by default" do
     start_supervised!({ExTTY, [handler: self()]})
 
     assert_receive {:tty_data, message}
@@ -12,6 +12,26 @@ defmodule ExTTYTest do
     assert_receive {:tty_data, "iex(1)> "}
 
     # Nothing else
+    refute_receive _
+  end
+
+  @tag :tmp_dir
+  test "that Elixir starts with .iex.exs option", %{tmp_dir: tmp_dir} do
+    dot_iex = "alias ExTTY, as: TTY"
+    dot_iex_path = Path.join(tmp_dir, "iex.exs")
+    File.write!(dot_iex_path, dot_iex)
+
+    start_supervised!(
+      {ExTTY, [handler: self(), type: :elixir, shell_opts: [[dot_iex_path: dot_iex_path]]]}
+    )
+
+    assert_receive {:tty_data, message}
+    assert message =~ "Interactive Elixir"
+
+    # Expect a prompt
+    assert_receive {:tty_data, "iex(1)> "}
+
+    # # Nothing else
     refute_receive _
   end
 
