@@ -8,7 +8,7 @@ defmodule ExTTY.MixProject do
     [
       app: :extty,
       version: @version,
-      elixir: "~> 1.10",
+      elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       build_embedded: Mix.env() == :prod,
       deps: deps(),
