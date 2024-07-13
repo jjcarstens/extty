@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.1
+
+* Support `:dot_iex` or `:dot_iex_path` option
+  * `:dot_iex` was mistakenly interpreted as an Elixir 1.17
+    option, but was being referenced from the `main` branch.
+    Elixir 1.17 still requires `:dot_iex_path`, so this change
+    adds support to include both for now
+
 ## v0.4.0
 
 * Adds support for Elixir 1.17
