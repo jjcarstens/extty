@@ -16,8 +16,11 @@ defmodule ExTTYTest do
   end
 
   @tag :tmp_dir
-  test "that Elixir starts with .iex.exs option", %{tmp_dir: tmp_dir} do
-    dot_iex = "alias ExTTY, as: TTY"
+  test "that Elixir starts with dot_iex_path option", %{tmp_dir: tmp_dir} do
+    dot_iex = """
+    IO.puts("Hello from iex.exs")
+    """
+
     dot_iex_path = Path.join(tmp_dir, "iex.exs")
     File.write!(dot_iex_path, dot_iex)
 
@@ -27,6 +30,9 @@ defmodule ExTTYTest do
 
     assert_receive {:tty_data, message}
     assert message =~ "Interactive Elixir"
+
+    assert_receive {:tty_data, message}
+    assert message =~ "Hello from iex.exs"
 
     # Expect a prompt
     assert_receive {:tty_data, "iex(1)> "}
