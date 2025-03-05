@@ -97,10 +97,9 @@ defmodule ExTTY do
   end
 
   @impl GenServer
-  def terminate(reason, state) do
+  def terminate(_reason, state) do
     # The `IEx.Server` and `IEx.Evaluator` don't go away with a simple `:normal` exit.
     Process.exit(state.group, :kill)
-    :ok
   end
 
   defp start_shell(state) do
