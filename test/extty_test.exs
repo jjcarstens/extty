@@ -104,4 +104,34 @@ defmodule ExTTYTest do
     # And nothing else
     refute_receive _
   end
+
+  test "group processes (i.e. IEx.Evaluator) are cleaned up" do
+    {:ok, iex_pid} = ExTTY.start_link(handler: self(), type: :elixir, shell_opts: [])
+    group = :sys.get_state(iex_pid).group
+    ref = Process.monitor(iex_pid)
+
+    Process.sleep(500)
+
+    count =
+      Enum.count(Process.list(), fn pid ->
+        info = Process.info(pid)
+        iex_pid in info[:links] or group == info[:group_leader]
+      end)
+
+    assert count >= 1
+
+    GenServer.stop(iex_pid, :normal, 10_000)
+
+    assert_receive {:DOWN, ^ref, :process, ^iex_pid, _}
+
+    Process.sleep(500)
+
+    count =
+      Enum.count(Process.list(), fn pid ->
+        info = Process.info(pid)
+        iex_pid in info[:links] or group == info[:group_leader]
+      end)
+
+    assert count == 0
+  end
 end
