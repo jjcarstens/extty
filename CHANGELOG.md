@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.4.2
+
+* Allow spawning remote shells via `:remsh` option (Thanks @SteffenDE!)
+* Attempt to cleanup processes spawned by the underlying shells when
+  the `ExTTY` process is closed (#14) (Thanks @joshk!)
+  * This primarily affects `:elixir` shells because the `IEx.Evaluator`
+    process that gets started by Elixir does lots of monitoring to
+    attempt to stay up. So even though other shell processes are linked
+    and closed correctly, the `IEx.Evaluator` process stays running
+    which can result in many of them running on machines which have
+    a long uptime and have created multiple `ExTTY` processes over time
+
 ## v0.4.1
 
 * Support `:dot_iex` or `:dot_iex_path` option
