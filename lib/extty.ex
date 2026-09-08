@@ -90,6 +90,15 @@ defmodule ExTTY do
     {:noreply, state}
   end
 
+  # `group` blocks for two seconds waiting on this reply before giving up, and
+  # from OTP 28 the Erlang shell asks for it while starting up, so without an
+  # answer the shell never reaches its first prompt. A pseudo-terminal has no
+  # real stdin or stdout to probe, so answer the way OTP's own `ssh_cli` does.
+  def handle_info({group, :get_terminal_state}, %{group: group} = state) do
+    send(group, {self(), :get_terminal_state, %{stdout: true, stdin: true}})
+    {:noreply, state}
+  end
+
   def handle_info({group, request}, %{group: group} = state) do
     {chars, new_buf} = @tty_cli.io_request(request, state.buf, state.pty, group)
     send_data(chars, state)
