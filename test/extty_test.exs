@@ -87,6 +87,35 @@ defmodule ExTTYTest do
     assert_receive {:tty_data, "iex(3)> "}
   end
 
+  test "non-ASCII input survives a prompt redraw" do
+    pid = start_supervised!({ExTTY, [handler: self()]})
+
+    assert_receive {:tty_data, message}
+    assert message =~ "Interactive Elixir"
+
+    # Expect a prompt
+    assert_receive {:tty_data, "iex(1)> "}
+
+    # Disable colors to make tests easier
+    :ok = ExTTY.send_text(pid, "IEx.configure(colors: [enabled: false])\r")
+    assert_receive {:tty_data, "IEx.configure(colors: [enabled: false])\r\n" <> _}
+    assert_receive {:tty_data, ":ok\r\n"}
+    assert_receive {:tty_data, "iex(2)> "}
+
+    # A bare `∞` is a syntax error, so IEx redraws the prompt line. That redraw
+    # used to reach `insert_chars` through the byte-wise clause, which turned
+    # every byte of the UTF-8 encoding into a codepoint of its own: `∞` came
+    # back as `â` followed by the C1 controls U+0088 and U+009E.
+    :ok = ExTTY.send_text(pid, "∞\r")
+
+    output = drain_tty_data()
+
+    assert output =~ "∞"
+    refute output =~ "â"
+    refute output =~ <<0x88::utf8>>
+    refute output =~ <<0x9E::utf8>>
+  end
+
   test "window change acknowledged" do
     pid = start_supervised!({ExTTY, [handler: self()]})
 
@@ -133,5 +162,13 @@ defmodule ExTTYTest do
       end)
 
     assert count == 0
+  end
+
+  defp drain_tty_data(acc \\ []) do
+    receive do
+      {:tty_data, data} -> drain_tty_data([data | acc])
+    after
+      500 -> acc |> Enum.reverse() |> Enum.join()
+    end
   end
 end

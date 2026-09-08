@@ -95,7 +95,7 @@ io_request({redraw_prompt, Pbs, Pbs2, {LB, {Bef, Aft}, LA}}, Buf, Tty, _Group) -
                true ->
                     {move_rel, -length(Aft)}
             end,
-    {T, InsertedText} = io_request({insert_chars, unicode:characters_to_binary(Text)}, Cleared, Tty, _Group),
+    {T, InsertedText} = io_request({insert_chars, unicode, unicode:characters_to_binary(Text)}, Cleared, Tty, _Group),
     {M, Moved} = io_request(Moves, InsertedText, Tty, _Group),
     {[ClearLine, T, M], Moved};
 io_request({delete_chars,N}, Buf, Tty, _Group) ->
