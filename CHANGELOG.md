@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.3
+
+* Decode UTF-8 correctly when redrawing the prompt (Thanks @joshk!)
+* Support OTP 28 and 29 (Thanks @joshk!)
+
 ## v0.4.2
 
 * Allow spawning remote shells via `:remsh` option (Thanks @SteffenDE!)
