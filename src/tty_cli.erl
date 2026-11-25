@@ -243,7 +243,12 @@ step_over(N, {LB, {[C | Bef], Aft}, LA, Col}) when N < 0 ->
     step_over(N1, {LB, {Bef, [C | Aft]}, LA, Col-1});
 step_over(N, {LB, {Bef, [C | Aft]}, LA, Col}) when N > 0 ->
     N1 = ifelse(C == ?PAD, N, N-1),
-    step_over(N1, {LB, {[C | Bef], Aft}, LA, Col+1}).
+    step_over(N1, {LB, {[C | Bef], Aft}, LA, Col+1});
+%% A move past either end of the line stops there, as prim_tty's does. From
+%% Elixir 1.19, the move back from blinking to a bracket on an earlier line
+%% lands one column past the end of the line.
+step_over(_N, Buf) ->
+    Buf.
 
 %%% col and row from position with given width
 col(N, W) -> N rem W.
