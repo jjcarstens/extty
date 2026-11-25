@@ -116,6 +116,42 @@ defmodule ExTTYTest do
     refute output =~ <<0x9E::utf8>>
   end
 
+  test "a closing bracket on the same line as its opener" do
+    pid = start_iex_without_colors()
+    ref = Process.monitor(pid)
+
+    # Typing the `)` blinks the cursor back to the `(` and then returns it
+    # to the end of the line.
+    :ok = ExTTY.send_text(pid, "Enum.sum([1, 2, 3])")
+    :ok = ExTTY.send_text(pid, "\r")
+
+    output = drain_tty_data()
+
+    refute_received {:DOWN, ^ref, :process, ^pid, _}
+    assert output =~ "6\r\n"
+    assert output =~ "iex(3)> "
+  end
+
+  test "a closing bracket on a later line than its opener" do
+    pid = start_iex_without_colors()
+    ref = Process.monitor(pid)
+
+    # Sent the way a terminal sends a paste: newlines as carriage returns and
+    # no Enter at the end. From Elixir 1.19, IEx keeps every line of an
+    # unfinished expression in one edit buffer, so typing the `)` blinks the
+    # cursor up to the `(` on the first line. The move back down lands one
+    # column past the end of the last line, which used to crash `tty_cli`
+    # with a `function_clause` and take the shell down with it.
+    :ok = ExTTY.send_text(pid, "Enum.sum([1,\r2,\r3])")
+    :ok = ExTTY.send_text(pid, "\r")
+
+    output = drain_tty_data()
+
+    refute_received {:DOWN, ^ref, :process, ^pid, _}
+    assert output =~ "6\r\n"
+    assert output =~ "iex(3)> "
+  end
+
   test "window change acknowledged" do
     pid = start_supervised!({ExTTY, [handler: self()]})
 
@@ -162,6 +198,22 @@ defmodule ExTTYTest do
       end)
 
     assert count == 0
+  end
+
+  defp start_iex_without_colors() do
+    pid = start_supervised!({ExTTY, [handler: self()]})
+
+    assert_receive {:tty_data, "iex(1)> "}
+
+    # Disable colors to make tests easier
+    :ok = ExTTY.send_text(pid, "IEx.configure(colors: [enabled: false])\r")
+    assert_receive {:tty_data, ":ok\r\n"}
+    assert_receive {:tty_data, "iex(2)> "}
+
+    # Leave nothing from startup in the mailbox
+    _ = drain_tty_data()
+
+    pid
   end
 
   defp drain_tty_data(acc \\ []) do
