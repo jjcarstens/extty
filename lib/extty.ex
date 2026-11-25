@@ -108,6 +108,9 @@ defmodule ExTTY do
   @impl GenServer
   def terminate(_reason, state) do
     # The `IEx.Server` and `IEx.Evaluator` don't go away with a simple `:normal` exit.
+    # Unlink first, or the group's `:killed` comes back over the link and
+    # replaces the reason this process is exiting with.
+    Process.unlink(state.group)
     Process.exit(state.group, :kill)
   end
 

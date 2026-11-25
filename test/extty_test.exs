@@ -152,6 +152,22 @@ defmodule ExTTYTest do
     assert output =~ "iex(3)> "
   end
 
+  @tag :capture_log
+  test "a crash exits with its own reason, not the group's" do
+    Process.flag(:trap_exit, true)
+    {:ok, pid} = ExTTY.start_link(handler: self())
+
+    assert_receive {:tty_data, "iex(1)> "}
+
+    # Nothing handles this call, so `handle_call/3` raises a `function_clause`.
+    catch_exit(GenServer.call(pid, :unknown))
+
+    # `terminate/2` kills the group, which used to be linked still, so the
+    # group's `:killed` came back and replaced the real reason.
+    assert_receive {:EXIT, ^pid, reason}
+    assert {:function_clause, _stacktrace} = reason
+  end
+
   test "window change acknowledged" do
     pid = start_supervised!({ExTTY, [handler: self()]})
 
