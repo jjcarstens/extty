@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.4
+
+* Fix crash when pasting multi-line expressions on Elixir 1.19+ (Thanks @joshk!)
+* Exit with the actual reason instead of `:killed` (Thanks @joshk!)
+
 ## v0.4.3
 
 * Support OTP 28 and 29 (Thanks @joshk!)
