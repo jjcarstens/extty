@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.3
+
+* Support OTP 28 and 29 (Thanks @joshk!)
+* Fix UTF-8 characters getting mangled when the prompt is redrawn
+* Fix crash when pasting multi-line expressions on Elixir 1.19+
+* Exit with the actual reason instead of `:killed`
+
 ## v0.4.2
 
 * Allow spawning remote shells via `:remsh` option (Thanks @SteffenDE!)
